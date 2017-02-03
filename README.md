@@ -1,6 +1,8 @@
 # pcap-har-watcher
 Watch a given folder for new pcap files and transform them into HAR files with a series of additional changes in order to enrich the files to be
 furtherly fed into an ELK instance (Elasticsearch, Logstash, Kibana).
+This pcap files are originally meant to come from observing docker containers run in a network, so additional information about them will be
+included in pcap file naming scheme.
 
   * Decode the base64 strings into JSON objects.
   * Add additional container information into the HAR file to allow the tracing of http responses accross the docker network.
