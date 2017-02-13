@@ -67,12 +67,15 @@ dispatcher = pcap.EasyParsePcap(filename=inputfile)
 # parse HAR stuff
 session = httpsession.HttpSession(dispatcher)
 
+
 logging.info('Flows=%d. HTTP pairs=%d' % (len(session.flows), len(session.entries)))
 
 #write the HAR file
 
 with open(outputfile, 'w') as f:
     json.dump(session, f, cls=har.JsonReprEncoder, indent=2, encoding='utf8', sort_keys=True)
+    f.write('\n')
+
 
 if options.resource_usage:
     print_rusage()
