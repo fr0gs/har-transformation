@@ -8,14 +8,17 @@ import getopt
 import shutil
 import time
 import base64
+import yaml
 
 
 observed_pcaps = []
 observed_hars = []
+docker_compose_file = {}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", "-i", help="Input folder")
 parser.add_argument("--output", "-o", help="Output folder")
+parser.add_argument("--dcompose", "-dc", help="Docker compose file to enrich the HARs")
 parser.add_argument("--period", "-p", help="Period", type=int)
 
 
@@ -48,6 +51,21 @@ def transform_pcaps(inputfolder, outputfolder):
                 os.system(cmd)
 
 
+def parse_container_links(yml_file):
+    """
+    Parses a given docker-compose YML file and creates a dictionary with all the linked containers that compose the network.
+
+    Args:
+        yml_file: the docker-compose.yml file
+    """
+
+    containers = {}
+    stream = file(yml_file, "r")
+    drc_file = yaml.safe_load(stream)
+    containers_links = { key: { elem.split(':')[0]: elem.split(':')[1] for elem in value['links'] } for (key, value) in drc_file['services'].iteritems() if 'links' in value }
+    return containers_links
+
+
 
 def enrich_hars(outputfolder):
     """
@@ -61,19 +79,23 @@ def enrich_hars(outputfolder):
             if file.endswith(".har") and (not file.endswith(".trans.har")) and file not in observed_hars:
                 print "[+] File: {har} not yet enriched. Enriching it..".format(har=file)
                 observed_hars.append(file)
+                container_name = file.split("_")[1]
                 decoded = json.loads(open(os.path.join(root, file)).read())
                 result = {}
                 result = parse_recursive_har(decoded)
+                result['meta'] = { 'container': file.split('_')[1], 'interface': file.split('_')[3] }
+                if container_name == "default":
+                    result['links'] = docker_compose_file
+                else:
+                    if container_name in docker_compose_file:
+                        result['links'] = docker_compose_file[container_name]
+
                 newname = file[:-4] + '.trans.har'
                 with open(os.path.join(root, newname), 'w') as f:
                     json.dump(result, f, indent=2, encoding='utf8', sort_keys=True)
                     f.write('\n')
-                # try:
-                #     os.remove(os.path.join(root, file))
-                # except OSError:
-                #     pass
 
-                
+
 def parse_recursive_har(har, isBase64 = False):
     """
     Transform the har object converting every object array into an object with numeric keys.
@@ -83,15 +105,15 @@ def parse_recursive_har(har, isBase64 = False):
     """
     result = {}
     for attr, value in har.iteritems():
-        if (type(har[attr]) is dict) and (attr == "content"):            
-            if "encoding" in har[attr].keys() and har[attr]["encoding"] == "base64":                
+        if (type(har[attr]) is dict) and (attr == "content"):
+            if "encoding" in har[attr].keys() and har[attr]["encoding"] == "base64":
                 result[attr] = parse_recursive_har(har[attr], True)
         elif type(har[attr]) is dict:
             result[attr] = parse_recursive_har(har[attr])
         elif type(har[attr]) is list:
             result[attr] = {}
             for i, val in enumerate(har[attr]):
-                result[attr][str(i)] = parse_recursive_har(val)                
+                result[attr][str(i)] = parse_recursive_har(val)
         else:
             if attr == "text" and isBase64 == True:
                 result[attr] = base64.b64decode(value)
@@ -102,6 +124,8 @@ def parse_recursive_har(har, isBase64 = False):
 
 if __name__ == '__main__':
     opts = parser.parse_args()
+    docker_compose_file = parse_container_links(opts.dcompose)
+    print docker_compose_file
     while True:
         transform_pcaps(opts.input, opts.output)
         enrich_hars(opts.output)
