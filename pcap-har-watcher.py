@@ -50,6 +50,8 @@ def transform_pcap(root, pcap_file, inputfolder, outputfolder):
         pcap_file: the pcap file
         inputfolder: the input folder.
         outputfolder: the output folder.
+    Raises:
+        OSError: if there is a race condition while making a directory in the outut folder, this error will arise.
     """
     new_output_folder = os.path.join(outputfolder, root.split(inputfolder, 1)[1])
     if not os.path.exists(new_output_folder):
@@ -171,9 +173,6 @@ def transformation_pipeline(inputfolder, outputfolder):
     Args:
         inputfolder: input folder to look for pcap files.
         outputfolder: output folder to save the converted har files.
-
-    Raises:
-        OSError: if there is a race condition while making a directory in the outut folder, this error will arise.
     """
     for root, dirs, files in os.walk(inputfolder):
         for fich in files:
@@ -203,5 +202,8 @@ if __name__ == '__main__':
     logging.basicConfig(filename=logfile,level=logging.DEBUG)
 
     while True:
-        transformation_pipeline(opts.input, opts.output)
-        time.sleep(opts.period)
+        if os.path.exists(opts.input):
+            transformation_pipeline(opts.input, opts.output)
+            time.sleep(opts.period)
+        else:
+            raise OSError('The directory' + opts.input + ' does not exist')
