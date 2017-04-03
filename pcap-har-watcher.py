@@ -111,6 +111,7 @@ def parse_recursive_har(har, har_name, isBase64 = False, isEntry = False):
             if container_name in docker_compose_file:
                 result['links'] = docker_compose_file[container_name]
         result['meta'] = { 'container': container_name, 'interface': interface }
+
     # Loop through the keys in the HAR file
     for attr, value in har.iteritems():
         # If we stumble upon base64 content, we call the function to decode it.
@@ -123,10 +124,13 @@ def parse_recursive_har(har, har_name, isBase64 = False, isEntry = False):
         # If the key is the entries list then enrich each entry, otherwise just loop through.
         elif type(har[attr]) is list:
             result[attr] = []
-            for i, val in enumerate(har[attr]):
-                if attr == "entries":
+            if attr == "entries":
+                for i, val in enumerate(har[attr]):
                     result[attr].append(parse_recursive_har(val, har_name, False, True))
-                else:
+            elif attr == "headers":
+                result[attr] = { header['name']: header['value'] for header in har[attr] }
+            else:
+                for i, val in enumerate(har[attr]):
                     result[attr].append(parse_recursive_har(val, har_name))
         # If it is a value in base64 (previously detected) then decode it, otherwise return it as is.
         else:
