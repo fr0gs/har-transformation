@@ -21,7 +21,7 @@ $ ./pcap-har-watcher.py -i <input_folder> -o <output_folder> -p <period> -dc <do
 ## Example
 
 ```sh
-$ ./pcap-har-watcher.py -i ../docker-watcher/pcap/ -o output/ -p 6
+$ ./pcap-har-watcher.py -i ../docker-watcher/pcap/ -o output/ -p 6 -dc docker-compose.yml
 ```
 
 
