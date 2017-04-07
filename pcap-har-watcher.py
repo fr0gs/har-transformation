@@ -123,13 +123,13 @@ def parse_recursive_har(har, har_name, isBase64 = False, isEntry = False):
         # If the key is a dictionary just loop through it.
         elif type(har[attr]) is dict:
             result[attr] = parse_recursive_har(har[attr], har_name)
-        # If the key is the entries list then enrich each entry, otherwise just loop through.
+        # If the key is a list, some data transformation is needed.
         elif type(har[attr]) is list:
             result[attr] = []
-            if attr == "entries":
+            if attr == "entries": # Enrich each entry in the entries[] array.
                 for i, val in enumerate(har[attr]):
                     result[attr].append(parse_recursive_har(val, har_name, False, True))
-            elif attr == "headers":
+            elif attr == "headers": # Convert headers from an array into an object.
                 result[attr] = { header['name']: header['value'] for header in har[attr] }
             else:
                 for i, val in enumerate(har[attr]):

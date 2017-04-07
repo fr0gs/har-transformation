@@ -1,6 +1,6 @@
 # pcap-har-watcher
 Watch a given folder for new pcap files and transform them into HAR files with a series of additional changes in order to enrich the files to be
-furtherly fed into an ELK instance (Elasticsearch, Logstash, Kibana).
+afterwards fed into an ELK instance (Elasticsearch, Logstash, Kibana).
 This pcap files are originally meant to come from observing docker containers run in a network, so additional information about them will be
 included in pcap file naming scheme.
 
@@ -10,12 +10,13 @@ included in pcap file naming scheme.
 ## Usage
 
 ```sh
-$ ./pcap-har-watcher.py -i <input_folder> -o <output_folder> -p <period>
+$ ./pcap-har-watcher.py -i <input_folder> -o <output_folder> -p <period> -dc <docker-compose_file>
 ```
 
   * -i <input_folder>: the folder where all the .pcap files are being periodically stored.
   * -o <output_folder>: the folder where the transformed .pcap into .har files are stored. This folder will replicate the same structure as the **input_folder**.
   * -p <period>: the amount of time in seconds the script will look for new pcap files for transformation.
+  * -dc <docker_compose_file>: the docker compose file to extract information about the containers links.
 
 ## Example
 
