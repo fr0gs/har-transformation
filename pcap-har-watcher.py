@@ -118,8 +118,10 @@ def parse_recursive_har(har, har_name, isBase64 = False, isEntry = False):
     for attr, value in har.iteritems():
         # If we stumble upon base64 content, we call the function to decode it.
         if (type(har[attr]) is dict) and (attr == "content"):
-            if "encoding" in har[attr].keys() and har[attr]["encoding"] == "base64":
+            if "encoding" in har[attr].keys() and har[attr]["encoding"] == "base64" and (har[attr]["mimeType"] == "application/json" or har[attr]["mimeType"] == "application/vnd.api+json" or har[attr]["mimeType"] == "application/sparql-results+json"):
                 result[attr] = parse_recursive_har(har[attr], har_name, True)
+            else:
+                result[attr] = parse_recursive_har(har[attr], har_name)
         # If the key is a dictionary just loop through it.
         elif type(har[attr]) is dict:
             result[attr] = parse_recursive_har(har[attr], har_name)
